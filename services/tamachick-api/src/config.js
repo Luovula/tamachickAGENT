@@ -12,7 +12,7 @@ export function getConfig(env = process.env) {
     projectApiClientId: env.TAMACHICK_PROJECT_API_CLIENT_ID || null,
     projectId: env.TAMACHICK_PROJECT_ID || DEFAULT_PROJECT_ID,
     projectApiBaseUrl: env.TAMACHICK_API_BASE_URL || DEFAULT_PROJECT_API_BASE_URL,
-    queryRouterTemplateId: DEFAULT_TEMPLATE_ID,
-    requestTimeoutMs: 10000,
+    queryRouterTemplateId: env.TAMACHICK_QUERY_ROUTER_TEMPLATE_ID || DEFAULT_TEMPLATE_ID,
+    requestTimeoutMs: readInt(env.TAMACHICK_UPSTREAM_TIMEOUT_MS, 10000),
   };
 }

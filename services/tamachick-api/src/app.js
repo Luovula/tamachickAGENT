@@ -67,7 +67,7 @@ export function createApp({ config = getConfig(), fetchImpl } = {}) {
       fallbackResolver: classifyAnimationTag,
     });
 
-    return res.status(200).json(tamachickResponse(result));
+    return res.status(result.httpStatus || 200).json(tamachickResponse(result));
   });
 
   app.use((error, _req, res, next) => {

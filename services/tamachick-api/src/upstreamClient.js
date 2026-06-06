@@ -48,6 +48,24 @@ function firstObject(...values) {
   return undefined;
 }
 
+function acceptedPayload(payload) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return null;
+  }
+
+  if (payload.status !== 'accepted') {
+    return null;
+  }
+
+  return {
+    status: 'accepted',
+    pending: true,
+    adw_id: payload.adw_id,
+    conversation_id: payload.conversation_id,
+    message_id: payload.message_id,
+  };
+}
+
 function normalizeUpstreamContent(payload) {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
     return {};
@@ -194,6 +212,20 @@ export async function resolveTamachickResponse({
       payload = null;
     }
 
+    const pendingPayload = acceptedPayload(payload);
+    if (response.status === 202 && pendingPayload) {
+      return {
+        animationTag: fallbackTag,
+        message: 'Peep! I received that and I am still working on the full response.',
+        intent: 'pending',
+        payload: pendingPayload,
+        httpStatus: 202,
+        mode: 'upstream-pending',
+        upstreamAttempted: true,
+        upstreamStatus: response.status,
+      };
+    }
+
     const upstreamContent = normalizeUpstreamContent(payload);
 
     return {
@@ -201,6 +233,7 @@ export async function resolveTamachickResponse({
       message: upstreamContent.message || fallback.message,
       intent: upstreamContent.intent || fallback.intent,
       payload: upstreamContent.payload || fallback.payload,
+      httpStatus: 200,
       mode: 'upstream',
       upstreamAttempted: true,
       upstreamStatus: response.status,

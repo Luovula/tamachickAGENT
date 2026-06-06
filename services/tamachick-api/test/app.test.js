@@ -35,6 +35,8 @@ test('getConfig reads Project API credentials plus non-secret upstream routing e
     TAMACHICK_PROJECT_API_CLIENT_ID: 'client-id',
     TAMACHICK_PROJECT_ID: 'prj_custom',
     TAMACHICK_API_BASE_URL: 'https://backend.example.test',
+    TAMACHICK_QUERY_ROUTER_TEMPLATE_ID: 'template-custom',
+    TAMACHICK_UPSTREAM_TIMEOUT_MS: '2500',
   });
 
   assert.equal(config.port, 3200);
@@ -42,6 +44,8 @@ test('getConfig reads Project API credentials plus non-secret upstream routing e
   assert.equal(config.projectApiClientId, 'client-id');
   assert.equal(config.projectId, 'prj_custom');
   assert.equal(config.projectApiBaseUrl, 'https://backend.example.test');
+  assert.equal(config.queryRouterTemplateId, 'template-custom');
+  assert.equal(config.requestTimeoutMs, 2500);
 });
 
 test('getConfig provides safe non-env defaults for Project API routing', () => {
@@ -129,8 +133,13 @@ test('POST /api/tamachick/query calls Project API with x-api-key and x-client-id
 
       return {
         ok: true,
-        status: 200,
-        json: async () => ({ status: 'accepted' }),
+        status: 202,
+        json: async () => ({
+          status: 'accepted',
+          adw_id: 'adw-1',
+          conversation_id: 'tamachick-api-session-1',
+          message_id: 'message-1',
+        }),
       };
     },
   });
@@ -144,9 +153,17 @@ test('POST /api/tamachick/query calls Project API with x-api-key and x-client-id
       context: { source: 'test' },
     });
 
-  assert.equal(response.status, 200);
+  assert.equal(response.status, 202);
   assert.equal(response.body.animation_tag, 'explain');
   assert.equal(hasRichResponseShape(response.body), true);
+  assert.equal(response.body.intent, 'pending');
+  assert.deepEqual(response.body.payload, {
+    status: 'accepted',
+    pending: true,
+    adw_id: 'adw-1',
+    conversation_id: 'tamachick-api-session-1',
+    message_id: 'message-1',
+  });
 });
 
 test('POST /api/tamachick/query preserves upstream rich fields when synchronous content is returned', async () => {
